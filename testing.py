@@ -67,7 +67,7 @@ class camThread(threading.Thread):
         camPreview(self.previewName, self.camID)
 
 def camPreview(previewName, camID):
-    net = cv2.dnn.readNet('yolov3_training_final.weights', 'yolov3_testing.cfg')
+    net = cv2.dnn.readNetFromDarknet('yolov4_tiny.cfg', 'yolov4_tiny.weights')
 
     classes = []
     with open("classes.txt", "r") as f:

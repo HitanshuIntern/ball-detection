@@ -4,7 +4,7 @@ from collections import deque
 
 import datetime
 
-net = cv2.dnn.readNet('yolov3_training_final.weights', 'yolov3_testing.cfg')
+net = cv2.dnn.readNetFromDarknet('yolov4_tiny.cfg', 'yolov4_tiny.weights')
 
 classes = []
 with open("classes.txt", "r") as f:
