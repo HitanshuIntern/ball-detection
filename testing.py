@@ -1,62 +1,9 @@
-'''import cv2
-import numpy as np
-
-cap = cv2.VideoCapture('football.mp4',0)
-cap1 = cv2.VideoCapture('footballRe.mp4',0)
-
-frame_width = int(cap.get(3))
-frame_height = int(cap.get(4))
-
-
-size = (frame_width, frame_height)
-
-out = cv2.VideoWriter('output1.avi', 
-                         cv2.VideoWriter_fourcc(*'MJPG'),
-                         10, size)
-
-
-while(cap.isOpened()):
-
-    ret, frame = cap.read()
-    ret1, frame1 = cap1.read()
-    if ret == True: 
-
-        both = np.concatenate((frame, frame1), axis=1)
-
-
-        cv2.imshow('Frame', both)
-        out.write(both)
-
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-
-    else: 
-        break
-
-cap.release()
-out.release()
-
-
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
-'''
-        
 import cv2
 import threading
 import numpy as np
 
-'''net = cv2.dnn.readNet('yolov3_training_final.weights', 'yolov3_testing.cfg')
 
-classes = []
-with open("classes.txt", "r") as f:
-    classes = f.read().splitlines()
-
-font = cv2.FONT_HERSHEY_PLAIN
-colors = np.random.uniform(0, 255, size=(100, 3))'''
-
+# Camera Thread run camera simultaneously
 class camThread(threading.Thread):
     def __init__(self, previewName, camID):
         threading.Thread.__init__(self)
@@ -64,11 +11,13 @@ class camThread(threading.Thread):
         self.camID = camID
     def run(self):
         print ("Starting " + self.previewName)
-        camPreview(self.previewName, self.camID)
+        camPreview(self.previewName, self.camID) #Calling Function camPreview which is head of this Script all Decision done here.
 
+#Head of Script..
 def camPreview(previewName, camID):
-    net = cv2.dnn.readNetFromDarknet('yolov4_tiny.cfg', 'yolov4_tiny.weights')
+    net = cv2.dnn.readNetFromDarknet('yolov4_tiny.cfg', 'yolov4_tiny.weights') #Loading of weights and configuration file
 
+    #Read Class Name from txt file
     classes = []
     with open("classes.txt", "r") as f:
         classes = f.read().splitlines()
@@ -76,16 +25,25 @@ def camPreview(previewName, camID):
         colors = np.random.uniform(0, 255, size=(100, 3))
 
     cv2.namedWindow(previewName)
-    cap = cv2.VideoCapture(camID)
+    cap = cv2.VideoCapture(camID) #Capturing the Video from camera with Camera id start with 0-> WebCam 1....n -> Extrenal Cam
+    frame_width = int(cap.get(3))
+    frame_height = int(cap.get(4))
+
+
+    size = (frame_width, frame_height)
+
+    result = cv2.VideoWriter('testing1.avi', 
+                         cv2.VideoWriter_fourcc(*'MJPG'),
+                         10, size) #Saving File just for testing purpose
 
     while True:
         _, img = cap.read()
         height, width, _ = img.shape
 
-        blob = cv2.dnn.blobFromImage(img, 1/255, (416, 416), (0,0,0), swapRB=True, crop=False)
-        net.setInput(blob)
-        output_layers_names = net.getUnconnectedOutLayersNames()
-        layerOutputs = net.forward(output_layers_names)
+        blob = cv2.dnn.blobFromImage(img, 1/255, (416, 416), (0,0,0), swapRB=True, crop=False) #convert image to a blog object for fast calculations
+        net.setInput(blob) #Feed Frame in Neural Network
+        output_layers_names = net.getUnconnectedOutLayersNames() #output layer
+        layerOutputs = net.forward(output_layers_names) #layer Names
 
         boxes = []
         confidences = []
@@ -94,8 +52,8 @@ def camPreview(previewName, camID):
             for detection in output:
                 scores = detection[5:]
                 class_id = np.argmax(scores)
-                confidence = scores[class_id]
-                if confidence > 0.2:
+                confidence = scores[class_id] #check Confidence
+                if confidence > 0.2: #threshold of condition
                     center_x = int(detection[0]*width)
                     center_y = int(detection[1]*height)
                     w = int(detection[2]*width)
@@ -107,9 +65,11 @@ def camPreview(previewName, camID):
                     boxes.append([x, y, w, h])
                     confidences.append((float(confidence)))
                     class_ids.append(class_id)
+                    result.write(img) #stiching of Frames in future it will become streaming funtion here....... Note it's Important
 
         indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.2, 0.4)
-
+        
+        # Fancy stuff Box and Text overlay
         if len(indexes)>0:
             for i in indexes.flatten():
                 x, y, w, h = boxes[i]
@@ -127,9 +87,9 @@ def camPreview(previewName, camID):
 
     
     cv2.destroyWindow(previewName)
+    result.release()
 
-# Create two threads as follows
-thread1 = camThread("Camera 1", 0)
-thread2 = camThread("Camera 2", 1)
+thread1 = camThread("Camera 1", 0) #webCam
+thread2 = camThread("Camera 2", 1) #External Cam
 thread1.start()
 thread2.start()
