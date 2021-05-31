@@ -34,7 +34,7 @@ def camPreview(previewName, camID):
 
     result = cv2.VideoWriter('testing1.avi', 
                          cv2.VideoWriter_fourcc(*'MJPG'),
-                         10, size) #Saving File just for testing purpose
+                         30, size) #Saving File just for testing purpose
 
     while True:
         _, img = cap.read()
